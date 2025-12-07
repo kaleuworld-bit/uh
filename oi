@@ -1,1 +1,689 @@
+from docx import Document
+from docx.shared import Pt, Cm, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
 
+def create_formatted_docx():
+    doc = Document()
+
+    # --- Configuração de Estilos (Global) ---
+    # Acessa o estilo 'Normal' para aplicar as configurações base
+    style = doc.styles['Normal']
+    font = style.font
+    p_format = style.paragraph_format
+
+    # 1. Fonte e Tamanho
+    # Tenta configurar American Typewriter Condensed, mas usa Courier New como fallback eficaz
+    # Na prática, o Word usará Courier New se American Typewriter não estiver instalada na máquina do usuário.
+    font.name = 'Courier New' 
+    font.size = Pt(12)
+    font.color.rgb = RGBColor(0, 0, 0) # Cor Preta RGB 0,0,0
+
+    # Garante que o XML do documento defina a fonte corretamente para High ANSI e ASCII
+    rPr = style.element.get_or_add_rPr()
+    rFonts = rPr.get_or_add_rFonts()
+    rFonts.set(qn('w:ascii'), 'Courier New')
+    rFonts.set(qn('w:hAnsi'), 'Courier New')
+
+    # 2. Parágrafo (Alinhamento, Recuo, Espaçamento)
+    p_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p_format.first_line_indent = Cm(1.25)
+    p_format.line_spacing = 1.5
+
+    # --- Criação de Estilo para Títulos ---
+    # Títulos centralizados e em negrito
+    styles = doc.styles
+    try:
+        title_style = styles.add_style('CustomTitle', 1) # 1 = Paragraph Style
+    except:
+        title_style = styles['CustomTitle']
+    
+    title_font = title_style.font
+    title_font.name = 'Courier New'
+    title_font.size = Pt(14) # Um pouco maior para destaque
+    title_font.bold = True
+    title_font.color.rgb = RGBColor(0, 0, 0)
+    
+    title_format = title_style.paragraph_format
+    title_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title_format.line_spacing = 1.5
+    title_format.space_after = Pt(12)
+
+    # --- Conteúdo das Questões ---
+    questions = [
+        {
+            "q": "1. A anemia é definida fundamentalmente pela redução da massa de hemoglobina. De acordo com a Organização Mundial da Saúde (OMS), qual é o critério diagnóstico de anemia para um homem adulto ao nível do mar?",
+            "options": [
+                "A) Hemoglobina < 12,0 g/dL",
+                "B) Hemoglobina < 13,0 g/dL",
+                "C) Hematócrito < 45%",
+                "D) Hemoglobina < 11,0 g/dL",
+                "E) Contagem de eritrócitos < 4,5 milhões/mm³"
+            ],
+            "answer": "B",
+            "explanation": "A OMS define anemia em homens adultos como concentração de hemoglobina inferior a 13,0 g/dL. Para mulheres não grávidas é < 12,0 g/dL e gestantes/crianças < 11,0 g/dL."
+        },
+        {
+            "q": "2. Na investigação inicial de uma anemia, a contagem de reticulócitos é crucial para a classificação fisiopatológica. Uma contagem de reticulócitos elevada (reticulocitose) sugere qual mecanismo subjacente?",
+            "options": [
+                "A) Deficiência de substratos (ferro, B12, folato)",
+                "B) Infiltração medular por neoplasia",
+                "C) Resposta medular adequada a hemólise ou sangramento agudo",
+                "D) Aplasia medular",
+                "E) Doença renal crônica com deficiência de EPO"
+            ],
+            "answer": "C",
+            "explanation": "A reticulocitose indica que a medula óssea está íntegra e respondendo (hiperproliferativa) a uma perda periférica de hemácias, seja por destruição (hemólise) ou perda sanguínea (hemorragia)."
+        },
+        {
+            "q": "3. Um paciente apresenta anemia com VCM (Volume Corpuscular Médio) de 72 fL. Qual das seguintes condições é a etiologia mais provável para este padrão microcítico?",
+            "options": [
+                "A) Anemia megaloblástica por deficiência de B12",
+                "B) Anemia hemolítica autoimune",
+                "C) Anemia por deficiência de ferro (ferropriva)",
+                "D) Hipotireoidismo",
+                "E) Aplasia de medula"
+            ],
+            "answer": "C",
+            "explanation": "Anemias microcíticas (VCM < 80 fL) são classicamente causadas por defeitos na síntese de hemoglobina, sendo a Anemia Ferropriva e as Talassemias as causas mais comuns."
+        },
+        {
+            "q": "4. O RDW (Red Cell Distribution Width) avalia a anisocitose. Qual padrão de VCM e RDW é tipicamente observado na Talassemia Minor (traço talassêmico)?",
+            "options": [
+                "A) VCM baixo e RDW elevado",
+                "B) VCM baixo e RDW normal",
+                "C) VCM alto e RDW normal",
+                "D) VCM normal e RDW elevado",
+                "E) VCM alto e RDW elevado"
+            ],
+            "answer": "B",
+            "explanation": "Na Talassemia Minor, o defeito genético produz uma população de hemácias uniformemente pequenas (microcitose homogênea), resultando em VCM baixo com RDW normal. Na ferropriva, o RDW costuma ser elevado (anisocitose)."
+        },
+        {
+            "q": "5. Qual alteração morfológica (poiquilocitose) é patognomônica da deficiência da enzima Glicose-6-Fosfato Desidrogenase (G6PD) durante uma crise hemolítica oxidativa?",
+            "options": [
+                "A) Drepanócitos",
+                "B) Esferócitos",
+                "C) Degmácitos (bite cells) e Corpos de Heinz",
+                "D) Dacriócitos",
+                "E) Equinócitos"
+            ],
+            "answer": "C",
+            "explanation": "Na deficiência de G6PD, o estresse oxidativo precipita a hemoglobina formando Corpos de Heinz. Quando os macrófagos esplênicos 'mordem' essas inclusões para removê-las, formam-se as 'bite cells' (degmácitos)."
+        },
+        {
+            "q": "6. A presença de Corpúsculos de Howell-Jolly no esfregaço de sangue periférico é um indicativo forte de:",
+            "options": [
+                "A) Intoxicação por chumbo",
+                "B) Deficiência de ferro severa",
+                "C) Hipoesplenismo ou asplenia funcional",
+                "D) Hiperatividade da medula óssea",
+                "E) Mielofibrose"
+            ],
+            "answer": "C",
+            "explanation": "Os Corpúsculos de Howell-Jolly são remanescentes nucleares de DNA que normalmente são removidos pelo baço. Sua presença indica ausência ou falha da função esplênica (ex: pós-esplenectomia ou falcização crônica)."
+        },
+        {
+            "q": "7. Na fisiopatologia da Doença Falciforme, a mutação pontual ocorre no gene da beta-globina. Qual é a substituição de aminoácidos específica responsável pela formação da Hemoglobina S?",
+            "options": [
+                "A) Ácido Glutâmico por Valina na posição 6",
+                "B) Valina por Ácido Glutâmico na posição 6",
+                "C) Ácido Glutâmico por Lisina na posição 6",
+                "D) Histidina por Arginina na posição 26",
+                "E) Leucina por Prolina na posição 10"
+            ],
+            "answer": "A",
+            "explanation": "A mutação clássica é a substituição do Ácido Glutâmico (hidrofílico) pela Valina (hidrofóbica) na posição 6 da cadeia beta, permitindo a polimerização da HbS sob desoxigenação."
+        },
+        {
+            "q": "8. O evento molecular primário que desencadeia a vaso-oclusão na Doença Falciforme é:",
+            "options": [
+                "A) Oxidação da membrana eritrocitária",
+                "B) Polimerização da HbS desoxigenada",
+                "C) Precipitação de cadeias alfa livres",
+                "D) Defeito na proteína espectrina",
+                "E) Inibição da bomba de sódio-potássio"
+            ],
+            "answer": "B",
+            "explanation": "A polimerização da HbS quando desoxigenada deforma a hemácia (falcização), tornando-a rígida e propensa a ocluir a microcirculação."
+        },
+        {
+            "q": "9. Qual dos seguintes genótipos corresponde à Anemia Falciforme clássica, a forma mais grave da doença?",
+            "options": [
+                "A) HbAS",
+                "B) HbSC",
+                "C) HbSS",
+                "D) HbS/Beta-talassemia",
+                "E) HbSD"
+            ],
+            "answer": "C",
+            "explanation": "A Anemia Falciforme refere-se especificamente ao estado homozigoto HbSS. Os outros genótipos (HbSC, HbS-Beta) são considerados Doenças Falciformes, mas não 'Anemia Falciforme' stricto sensu."
+        },
+        {
+            "q": "10. Indivíduos com Traço Falciforme (HbAS) são geralmente assintomáticos. Contudo, em condições extremas, podem apresentar complicações. Qual é o principal mecanismo protetor que impede a falcização maciça nesses indivíduos?",
+            "options": [
+                "A) Ausência total de HbS",
+                "B) Presença de > 50% de HbA que interfere na polimerização",
+                "C) Níveis elevados de HbF persistente",
+                "D) Ausência de baço",
+                "E) Menor contagem de reticulócitos"
+            ],
+            "answer": "B",
+            "explanation": "A presença de hemoglobina A (normal) em quantidade superior à HbS nos heterozigotos previne a formação de polímeros longos de HbS em condições fisiológicas normais."
+        },
+        {
+            "q": "11. A hemólise intravascular crônica na Doença Falciforme consome um importante vasodilatador endógeno, contribuindo para a vasculopatia. Qual é essa substância?",
+            "options": [
+                "A) Endotelina-1",
+                "B) Prostaglandina E2",
+                "C) Óxido Nítrico (NO)",
+                "D) Tromboxano A2",
+                "E) Bradicinina"
+            ],
+            "answer": "C",
+            "explanation": "A hemoglobina livre no plasma (decorrente da hemólise) sequestra o Óxido Nítrico (NO), levando à vasoconstrição, ativação endotelial e hipertensão pulmonar."
+        },
+        {
+            "q": "12. Qual é a principal causa de mortalidade em pacientes adultos com Doença Falciforme, frequentemente precipitada por episódios repetidos de vaso-oclusão pulmonar?",
+            "options": [
+                "A) Acidente Vascular Cerebral (AVC)",
+                "B) Síndrome Torácica Aguda (STA)",
+                "C) Sequestro Esplênico",
+                "D) Osteomielite",
+                "E) Priapismo"
+            ],
+            "answer": "B",
+            "explanation": "A Síndrome Torácica Aguda (STA) é uma das complicações agudas mais graves e a principal causa de óbito em pacientes com anemia falciforme."
+        },
+        {
+            "q": "13. O exame de Doppler Transcraniano é fundamental na pediatria falciforme para a prevenção primária de qual complicação?",
+            "options": [
+                "A) Retinopatia proliferativa",
+                "B) Acidente Vascular Cerebral (AVC) Isquêmico",
+                "C) Meningite pneumocócica",
+                "D) Necrose avascular da cabeça do fêmur",
+                "E) Surdez neurossensorial"
+            ],
+            "answer": "B",
+            "explanation": "O Doppler Transcraniano detecta velocidades de fluxo sanguíneo aumentadas nas artérias cerebrais, identificando crianças com alto risco de AVC isquêmico para iniciar profilaxia transfusional."
+        },
+        {
+            "q": "14. A Hidroxiureia é o principal fármaco modificador da doença na Anemia Falciforme. Qual é seu principal mecanismo de ação benéfico?",
+            "options": [
+                "A) Quelação de ferro",
+                "B) Indução da produção de Hemoglobina Fetal (HbF)",
+                "C) Anticoagulação sistêmica",
+                "D) Vasodilatação direta",
+                "E) Supressão da medula óssea para reduzir plaquetas"
+            ],
+            "answer": "B",
+            "explanation": "A Hidroxiureia aumenta os níveis de HbF (hemoglobina fetal). A HbF não se polimeriza e interfere na polimerização da HbS, prevenindo a falcização."
+        },
+        {
+            "q": "15. Devido à asplenia funcional (autoesplenectomia), crianças com Doença Falciforme têm risco aumentado de infecção por bactérias encapsuladas. Qual antibiótico é utilizado profilaticamente até os 5 anos de idade?",
+            "options": [
+                "A) Azitromicina",
+                "B) Cefalexina",
+                "C) Penicilina V Oral (ou Benzatina)",
+                "D) Sulfametoxazol-Trimetoprima",
+                "E) Ciprofloxacino"
+            ],
+            "answer": "C",
+            "explanation": "A profilaxia com Penicilina (iniciada antes dos 4 meses até os 5 anos) é mandatória para prevenir sepse pneumocócica fatal."
+        },
+        {
+            "q": "16. Qual vacina, além do calendário básico, é crucial para pacientes falciformes devido ao risco de infecção por germes encapsulados?",
+            "options": [
+                "A) Febre Amarela",
+                "B) Rotavírus",
+                "C) Pneumocócica 23-valente e Meningocócica ACWY",
+                "D) BCG reforço",
+                "E) Dengue"
+            ],
+            "answer": "C",
+            "explanation": "Pacientes asplênicos necessitam de cobertura ampliada contra Pneumococo (VPC13 + VPP23) e Meningococo (MenACWY e MenB)."
+        },
+        {
+            "q": "17. O Sequestro Esplênico Agudo é uma emergência caracterizada por:",
+            "options": [
+                "A) Aumento súbito do baço, queda abrupta da Hb e choque hipovolêmico",
+                "B) Infecção bacteriana fulminante",
+                "C) Dor abdominal crônica sem alteração hemodinâmica",
+                "D) Trombose da veia porta",
+                "E) Hemólise autoimune"
+            ],
+            "answer": "A",
+            "explanation": "O sequestro esplênico envolve o aprisionamento maciço de sangue no baço, causando esplenomegalia aguda dolorosa, anemia grave súbita e risco de choque."
+        },
+        {
+            "q": "18. A Dactilite (Síndrome Mão-Pé) é frequentemente a primeira manifestação clínica da Anemia Falciforme em lactentes. Ela decorre de:",
+            "options": [
+                "A) Infecção óssea (osteomielite)",
+                "B) Artrite séptica",
+                "C) Infarto ósseo (vaso-oclusão) nos pequenos ossos das mãos e pés",
+                "D) Deficiência de Vitamina D",
+                "E) Trauma acidental"
+            ],
+            "answer": "C",
+            "explanation": "A dactilite é causada por necrose avascular da medula óssea nos ossos metacarpais e metatarsais devido à vaso-oclusão."
+        },
+        {
+            "q": "19. Qual método laboratorial é considerado o padrão-ouro para confirmação diagnóstica e diferenciação das variantes de hemoglobinopatias (HbSS, HbSC, Traço)?",
+            "options": [
+                "A) Teste de falcização (metabissulfito)",
+                "B) Hemograma completo",
+                "C) Eletroforese de Hemoglobina (em pH alcalino/ácido) ou HPLC",
+                "D) Dosagem de ferritina",
+                "E) Teste de Coombs Direto"
+            ],
+            "answer": "C",
+            "explanation": "A eletroforese de hemoglobina (ou HPLC) quantifica e identifica os tipos de hemoglobina, permitindo distinguir HbS, HbC, HbA e HbF."
+        },
+        {
+            "q": "20. Na crise aplásica em pacientes falciformes, há uma parada temporária da eritropoiese com reticulocitopenia severa. Qual é o agente etiológico mais comum?",
+            "options": [
+                "A) Streptococcus pneumoniae",
+                "B) Vírus Influenza",
+                "C) Parvovírus B19",
+                "D) Salmonella",
+                "E) Citomegalovírus"
+            ],
+            "answer": "C",
+            "explanation": "O Parvovírus B19 infecta os progenitores eritroides na medula óssea, causando parada temporária na produção de hemácias (aplasia eritroide transitória)."
+        },
+        {
+            "q": "21. As Talassemias são definidas fisiopatologicamente como:",
+            "options": [
+                "A) Defeito qualitativo na estrutura da hemoglobina",
+                "B) Defeito quantitativo na síntese de cadeias de globina",
+                "C) Defeito na membrana eritrocitária",
+                "D) Deficiência enzimática",
+                "E) Doença autoimune contra hemácias"
+            ],
+            "answer": "B",
+            "explanation": "Talassemia é caracterizada pela redução ou ausência de síntese de uma ou mais cadeias de globina (alfa ou beta), diferindo das hemoglobinopatias estruturais (como a Falciforme)."
+        },
+        {
+            "q": "22. Na Beta-Talassemia Maior, a anemia grave resulta não apenas da hemólise periférica, mas principalmente de:",
+            "options": [
+                "A) Hemorragia oculta",
+                "B) Eritropoiese ineficaz (apoptose intramedular)",
+                "C) Deficiência de ferro concomitante",
+                "D) Aplasia medular pura",
+                "E) Sequestro pulmonar"
+            ],
+            "answer": "B",
+            "explanation": "O excesso de cadeias alfa livres (devido à falta de beta) precipita-se nos eritroblastos, causando sua destruição ainda na medula óssea (eritropoiese ineficaz)."
+        },
+        {
+            "q": "23. Qual achado na eletroforese de hemoglobina é característico e diagnóstico do portador de Traço Beta-Talassêmico (Beta-Talassemia Minor)?",
+            "options": [
+                "A) Elevação da HbA2 (> 3,5%)",
+                "B) Presença de HbH",
+                "C) Presença de HbS",
+                "D) Ausência total de HbA",
+                "E) HbF > 50%"
+            ],
+            "answer": "A",
+            "explanation": "O traço beta-talassêmico é classicamente diagnosticado pelo aumento compensatório da Hemoglobina A2 (alfa2/delta2), geralmente acima de 3,5%."
+        },
+        {
+            "q": "24. A deleção de três dos quatro genes da alfa-globina (- - / - α) resulta em qual condição clínica?",
+            "options": [
+                "A) Portador silencioso",
+                "B) Hidropsia Fetal",
+                "C) Doença da Hemoglobina H",
+                "D) Talassemia Maior",
+                "E) Traço falciforme"
+            ],
+            "answer": "C",
+            "explanation": "A deleção de 3 genes alfa leva à Doença da HbH, caracterizada por anemia hemolítica moderada a grave e presença de tetrâmeros beta (HbH)."
+        },
+        {
+            "q": "25. A Hidropsia Fetal por alfa-talassemia é incompatível com a vida extrauterina sem intervenção, pois a Hemoglobina Bart (gamma4) formada:",
+            "options": [
+                "A) Polimeriza-se e oclui vasos",
+                "B) Tem afinidade excessiva pelo oxigênio e não o libera nos tecidos",
+                "C) Causa autoimunidade materna",
+                "D) Não consegue ligar oxigênio",
+                "E) Destrói o fígado fetal"
+            ],
+            "answer": "B",
+            "explanation": "A Hb Bart (tetrâmero de gama) tem afinidade altíssima pelo O2, comportando-se como mioglobina, falhando na entrega de oxigênio aos tecidos (hipóxia tecidual severa)."
+        },
+        {
+            "q": "26. Pacientes com Talassemia Maior dependentes de transfusão desenvolvem sobrecarga de ferro secundária. Qual é a principal causa de óbito nesses pacientes se não quelados adequadamente?",
+            "options": [
+                "A) Cirrose hepática",
+                "B) Diabetes Mellitus",
+                "C) Cardiomiopatia por deposição de ferro (Insuficiência Cardíaca/Arritmia)",
+                "D) Infecção viral",
+                "E) Hipotireoidismo"
+            ],
+            "answer": "C",
+            "explanation": "A siderose cardíaca é a complicação mais letal, levando a arritmias e insuficiência cardíaca refratária."
+        },
+        {
+            "q": "27. Na Talassemia Intermédia (não dependente de transfusão), a sobrecarga de ferro ocorre principalmente devido a:",
+            "options": [
+                "A) Transfusões sanguíneas",
+                "B) Aumento da absorção intestinal de ferro mediado pela supressão da hepcidina",
+                "C) Hemólise intravascular maciça",
+                "D) Dieta rica em ferro",
+                "E) Defeito na transferrina"
+            ],
+            "answer": "B",
+            "explanation": "A eritropoiese ineficaz expandida secreta eritroferrona, que inibe a hepcidina, resultando em absorção intestinal de ferro descontrolada mesmo sem transfusões."
+        },
+        {
+            "q": "28. O 'Fácies de Cooley', caracterizado por proeminência malar e bossa frontal, é consequência de:",
+            "options": [
+                "A) Acúmulo de ferro nos ossos",
+                "B) Expansão da medula óssea (hiperplasia eritroide) deformando o esqueleto",
+                "C) Deficiência de cálcio",
+                "D) Uso crônico de corticoides",
+                "E) Infecções ósseas repetidas"
+            ],
+            "answer": "B",
+            "explanation": "A medula óssea tenta compensar a anemia expandindo-se drasticamente, invadindo o córtex ósseo e causando deformidades craniofaciais."
+        },
+        {
+            "q": "29. Qual dos seguintes medicamentos é um quelante de ferro oral utilizado no tratamento da sobrecarga de ferro?",
+            "options": [
+                "A) Deferasirox",
+                "B) Desferroxamina (apenas SC/IV)",
+                "C) Warfarina",
+                "D) Ácido fólico",
+                "E) Hidroxiureia"
+            ],
+            "answer": "A",
+            "explanation": "Deferasirox e Deferiprona são quelantes orais. A Desferroxamina é parenteral (subcutânea ou venosa)."
+        },
+        {
+            "q": "30. O Luspatercept é uma nova terapia aprovada para beta-talassemia que atua:",
+            "options": [
+                "A) Quelando ferro",
+                "B) Corrigindo o gene da globina",
+                "C) Promovendo a maturação dos precursores eritroides e reduzindo a eritropoiese ineficaz",
+                "D) Aumentando a EPO",
+                "E) Inibindo a absorção de ferro"
+            ],
+            "answer": "C",
+            "explanation": "O Luspatercept atua ligando-se a ligantes da superfamília TGF-beta, desbloqueando a maturação dos eritroblastos tardios."
+        },
+        {
+            "q": "31. A fisiopatologia da Esferocitose Hereditária baseia-se em:",
+            "options": [
+                "A) Defeito na síntese de hemoglobina",
+                "B) Defeito nas proteínas do citoesqueleto da membrana (espectrina/anquirina)",
+                "C) Deficiência de enzima glicolítica",
+                "D) Presença de hemoglobina instável",
+                "E) Anticorpos anti-membrana"
+            ],
+            "answer": "B",
+            "explanation": "A EH é uma membranopatia causada por defeitos nas proteínas de interação vertical (anquirina, espectrina, banda 3), levando à perda de vesículas de membrana."
+        },
+        {
+            "q": "32. Na Esferocitose Hereditária, a perda de membrana sem perda proporcional de citoplasma leva a:",
+            "options": [
+                "A) Aumento da relação superfície/volume",
+                "B) Diminuição da relação superfície/volume (esfericidade)",
+                "C) Diminuição da CHCM",
+                "D) Aumento da deformabilidade celular",
+                "E) Formação de drepanócitos"
+            ],
+            "answer": "B",
+            "explanation": "A célula torna-se esférica para acomodar o volume com menos membrana, reduzindo a relação superfície/volume e a deformabilidade."
+        },
+        {
+            "q": "33. O local primário de destruição dos esferócitos na Esferocitose Hereditária é:",
+            "options": [
+                "A) Vasos sanguíneos (hemólise intravascular)",
+                "B) Fígado",
+                "C) Baço (polpa vermelha)",
+                "D) Medula óssea",
+                "E) Rins"
+            ],
+            "answer": "C",
+            "explanation": "O baço é o órgão onde os esferócitos rígidos ficam aprisionados nos cordões de Billroth e são fagocitados (hemólise extravascular)."
+        },
+        {
+            "q": "34. Qual parâmetro do hemograma é caracteristicamente elevado na Esferocitose Hereditária, refletindo a desidratação celular?",
+            "options": [
+                "A) VCM",
+                "B) HCM",
+                "C) CHCM (Concentração de Hemoglobina Corpuscular Média)",
+                "D) Contagem de plaquetas",
+                "E) Leucócitos"
+            ],
+            "answer": "C",
+            "explanation": "A CHCM elevada (> 36 g/dL) é um marcador clássico de esferocitose, indicando alta densidade de hemoglobina por perda de água/membrana."
+        },
+        {
+            "q": "35. O teste diagnóstico clássico que avalia a resistência das hemácias à lise em soluções hipotônicas na Esferocitose é:",
+            "options": [
+                "A) Teste de Coombs",
+                "B) Eletroforese de Hb",
+                "C) Teste de Fragilidade Osmótica",
+                "D) Teste de Ham",
+                "E) Dosagem de G6PD"
+            ],
+            "answer": "C",
+            "explanation": "O Teste de Fragilidade Osmótica mostra lise aumentada em concentrações salinas onde células normais resistiriam, devido à baixa relação superfície/volume dos esferócitos."
+        },
+        {
+            "q": "36. Para diferenciar Esferocitose Hereditária de Anemia Hemolítica Autoimune (que também apresenta esferócitos), deve-se solicitar:",
+            "options": [
+                "A) Reticulócitos",
+                "B) Teste de Coombs Direto (TAD)",
+                "C) Bilirrubinas",
+                "D) LDH",
+                "E) Ultrassom abdominal"
+            ],
+            "answer": "B",
+            "explanation": "O Coombs Direto é negativo na Esferocitose Hereditária e positivo na Anemia Hemolítica Autoimune (presença de anticorpos na membrana)."
+        },
+        {
+            "q": "37. Qual é a complicação biliar mais comum na Esferocitose Hereditária devido à hemólise crônica?",
+            "options": [
+                "A) Colangiocarcinoma",
+                "B) Cálculos biliares de colesterol",
+                "C) Cálculos biliares pigmentares (bilirrubinato de cálcio)",
+                "D) Atresia de vias biliares",
+                "E) Hepatite autoimune"
+            ],
+            "answer": "C",
+            "explanation": "O excesso de bilirrubina excretada na bile (produto da hemólise) precipita, formando cálculos pigmentares pretos."
+        },
+        {
+            "q": "38. O tratamento definitivo para curar a anemia (mas não o defeito de membrana) na Esferocitose Hereditária moderada a grave é:",
+            "options": [
+                "A) Transplante de medula",
+                "B) Esplenectomia",
+                "C) Corticoterapia",
+                "D) Hidroxiureia",
+                "E) Imunoglobulina"
+            ],
+            "answer": "B",
+            "explanation": "A remoção do baço elimina o local de destruição, normalizando a sobrevida das hemácias, embora os esferócitos persistam na circulação."
+        },
+        {
+            "q": "39. Após a esplenectomia, quais alterações morfológicas podem aparecer no sangue periférico?",
+            "options": [
+                "A) Esquizócitos",
+                "B) Corpúsculos de Howell-Jolly",
+                "C) Drepanócitos",
+                "D) Blastos",
+                "E) Anéis de Cabot apenas"
+            ],
+            "answer": "B",
+            "explanation": "Sem o baço para remover inclusões, fragmentos nucleares (Howell-Jolly) persistem nas hemácias circulantes."
+        },
+        {
+            "q": "40. A suplementação diária de Ácido Fólico é indicada em anemias hemolíticas crônicas (SCD, Talassemia, EH) para prevenir:",
+            "options": [
+                "A) Anemia ferropriva",
+                "B) Crise megaloblástica por exaustão de folato",
+                "C) Crise aplásica",
+                "D) Sobrecarga de ferro",
+                "E) Infecções"
+            ],
+            "answer": "B",
+            "explanation": "A eritropoiese acelerada consome muito folato. Se não reposto, o paciente desenvolve deficiência de folato e anemia megaloblástica sobreposta."
+        },
+        {
+            "q": "41. Na diferenciação entre Anemia Ferropriva e Talassemia Minor, o Índice de Mentzer (VCM / Contagem de Hemácias) é frequentemente usado. Um índice baixo (< 13) sugere:",
+            "options": [
+                "A) Anemia Ferropriva",
+                "B) Talassemia",
+                "C) Anemia de Doença Crônica",
+                "D) Anemia Sideroblástica",
+                "E) Hemólise"
+            ],
+            "answer": "B",
+            "explanation": "Na Talassemia, o número de hemácias é normal ou alto, mas elas são muito pequenas, gerando um índice VCM/RBC baixo (<13). Na ferropriva, o número de hemácias cai junto, gerando índice >13."
+        },
+        {
+            "q": "42. Qual dos seguintes achados NÃO é esperado em uma hemólise intravascular aguda?",
+            "options": [
+                "A) Hemoglobinúria",
+                "B) Queda da Haptoglobina",
+                "C) Aumento da LDH",
+                "D) Aumento da Bilirrubina Direta",
+                "E) Esquizócitos (se microangiopática)"
+            ],
+            "answer": "D",
+            "explanation": "Hemólise eleva a Bilirrubina INDIRETA (não conjugada). A direta aumenta em colestase/doença hepática."
+        },
+        {
+            "q": "43. A Policitemia Vera diferencia-se das policitemias secundárias (ex: altitude, DPOC) principalmente por:",
+            "options": [
+                "A) Níveis elevados de Eritropoietina (EPO)",
+                "B) Níveis baixos de EPO e presença da mutação JAK2",
+                "C) Saturação de oxigênio baixa",
+                "D) Ausência de esplenomegalia",
+                "E) VCM elevado"
+            ],
+            "answer": "B",
+            "explanation": "Policitemia Vera é uma neoplasia mieloproliferativa independente de EPO (logo, EPO está baixa/suprimida) e associada à mutação JAK2 V617F."
+        },
+        {
+            "q": "44. Os codócitos (células em alvo) são tipicamente encontrados em quais condições?",
+            "options": [
+                "A) Esferocitose Hereditária",
+                "B) Hemoglobinopatias (C, S, Talassemias) e Hepatopatias",
+                "C) Deficiência de G6PD",
+                "D) Uremia",
+                "E) Púrpura Trombocitopênica Trombótica"
+            ],
+            "answer": "B",
+            "explanation": "Células em alvo ocorrem quando há excesso de membrana em relação ao volume de hemoglobina, comum em Talassemias, Hemoglobinopatias C e S, e doenças hepáticas."
+        },
+        {
+            "q": "45. A úlcera de perna, tipicamente maleolar, é uma complicação crônica clássica de qual anemia?",
+            "options": [
+                "A) Anemia Perniciosa",
+                "B) Anemia Falciforme",
+                "C) Anemia Ferropriva",
+                "D) Anemia de Fanconi",
+                "E) Traço Talassêmico"
+            ],
+            "answer": "B",
+            "explanation": "Úlceras maleolares dolorosas e de difícil cicatrização são comuns em adultos com anemia falciforme devido à isquemia microvascular e hemólise."
+        },
+        {
+            "q": "46. O priapismo na doença falciforme é uma emergência urológica causada por:",
+            "options": [
+                "A) Infecção urinária",
+                "B) Obstrução do fluxo venoso de drenagem dos corpos cavernosos por hemácias falcizadas",
+                "C) Excesso de testosterona",
+                "D) Lesão nervosa",
+                "E) Uso de hidroxiureia"
+            ],
+            "answer": "B",
+            "explanation": "A falcização no sistema venoso peniano impede a drenagem sanguínea, causando ereção prolongada, dolorosa e isquêmica."
+        },
+        {
+            "q": "47. Em relação à morfologia, a anemia da doença renal crônica é tipicamente:",
+            "options": [
+                "A) Microcítica e Hipocrômica",
+                "B) Macrocítica",
+                "C) Normocítica e Normocrômica",
+                "D) Hemolítica",
+                "E) Hipercrômica"
+            ],
+            "answer": "C",
+            "explanation": "A falta de EPO reduz a produção, mas não altera a maturação do citoplasma ou núcleo, resultando em células normais em tamanho e cor, apenas em menor número."
+        },
+        {
+            "q": "48. O Teste do Pezinho (Triagem Neonatal) no Brasil inclui a detecção de hemoglobinopatias. Qual técnica é utilizada?",
+            "options": [
+                "A) Hemograma",
+                "B) HPLC (Cromatografia Líquida de Alta Performance) ou Focalização Isoelétrica",
+                "C) Teste de afoiçamento",
+                "D) PCR",
+                "E) Microscopia direta"
+            ],
+            "answer": "B",
+            "explanation": "HPLC e IEF são os métodos de escolha pela alta sensibilidade em detectar HbS, HbC e outras variantes mesmo na presença de alta HbF."
+        },
+        {
+            "q": "49. A hemoglobina H (HbH) é um tetrâmero composto por:",
+            "options": [
+                "A) Quatro cadeias alfa",
+                "B) Quatro cadeias beta (beta4)",
+                "C) Duas alfa e duas gama",
+                "D) Quatro cadeias gama",
+                "E) Duas alfa e duas delta"
+            ],
+            "answer": "B",
+            "explanation": "Na falta de cadeias alfa (alfa-talassemia), as cadeias beta se acumulam e formam tetrâmeros beta4 instáveis, chamados HbH."
+        },
+        {
+            "q": "50. Qual é a conduta imediata mandatória em uma criança com Anemia Falciforme apresentando febre de 38,5°C?",
+            "options": [
+                "A) Antipirético e observação em casa",
+                "B) Avaliação médica imediata, hemocultura e antibiótico parenteral (Ceftriaxona)",
+                "C) Aumentar a dose de hidroxiureia",
+                "D) Transfusão profilática",
+                "E) Raio-X de tórax apenas"
+            ],
+            "answer": "B",
+            "explanation": "Devido ao risco de sepse fulminante por encapsulados (asplenia), qualquer febre em falciforme é emergência médica exigindo antibiótico empírico rápido."
+        }
+    ]
+
+    # --- Escrita das Questões ---
+    doc.add_paragraph("Simulado de Hematologia: Anemias, Doença Falciforme e Membranopatias", style='CustomTitle')
+    
+    for i, q in enumerate(questions):
+        p_q = doc.add_paragraph(style='Normal')
+        runner = p_q.add_run(q['q'])
+        runner.bold = True
+        
+        for opt in q['options']:
+            p_opt = doc.add_paragraph(opt, style='Normal')
+            # Ajuste de recuo para opções
+            p_opt.paragraph_format.left_indent = Cm(1.25)
+            p_opt.paragraph_format.first_line_indent = Cm(0) # Remove recuo de primeira linha nas opções
+        
+        doc.add_paragraph("", style='Normal') # Espaço entre questões
+
+    # --- Gabarito ---
+    doc.add_page_break()
+    doc.add_paragraph("Gabarito e Comentários", style='CustomTitle')
+
+    for i, q in enumerate(questions):
+        p_ans = doc.add_paragraph(style='Normal')
+        run_num = p_ans.add_run(f"{i+1}. {q['answer']}")
+        run_num.bold = True
+        p_ans.add_run(f" - {q['explanation']}")
+
+    # Salvar
+    file_path = "Simulado_Hematologia_P1M18.docx"
+    doc.save(file_path)
+    return file_path
+
+# Executa a criação
+output_file = create_formatted_docx()
+print(f"Arquivo criado: {output_file}")
